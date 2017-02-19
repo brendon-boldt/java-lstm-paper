@@ -56,6 +56,10 @@
     % unless you've provided the [accepted] option to the icml2013
     % package.
     \icmlauthor{Brendon Boldt}{brendon.boldt1@marist.edu}
+    \icmlauthor{Pablo Rivas}{pablo.rivas@marist.edu}
+    % feel free to remove me at the end if you think I have not done 
+    % sufficient work to deserve co-authorship, or also if you are entering a
+    % student paper contest.
     \icmladdress{Marist College,
                 3399 North Rd. Poughkeepsie, New York 12601}
     
@@ -74,21 +78,22 @@
 
 \begin{abstract} 
 Recurrent neural networks (RNNs), specifically long-short term memory 
-networks (LSTM) are particularly good at performing next word prediction 
+networks (LSTMs), are particularly good at performing next word prediction 
 on natural languages. This research 
-investigates the ability for these same LSTMs to perform next “word” 
+investigates the ability for these same LSTMs to perform next ``word'' 
 prediction on programming languages, namely the Java programming 
-language. In order to be fed into the LSTM, Java source code had to 
-undergo a transformation which preserved the logical structure of the 
-source code and removed from the code various specificities such as 
-variable names and literal values. A standard English corpora and four 
-separate Java repositories were then tested with a standard LSTM. 
-Results suggest that LSTM used can more effectively model Java code 
-than it can English (a perplexity of $85$ and an accuracy of $0.27$ for an
-English corpus and
-perplexities under $22$ and accuracies above $0.47$ for Java corpora).
-These findings could be useful in areas such as 
-syntactic template suggestion and automated bug patching.
+language. Java source code from four different data sets
+undergoes a transformation that preserves the logical structure of the 
+source code and removes the code's various specificities such as 
+variable names and literal values. Such datasets and an additional English 
+language corpora are used to train and test standard LSTMs' ability to predict
+the next element in the sequence. 
+Results suggest that LSTMs, under the proposed model, can effectively model
+Java code achieving perplexities under $22$ and accuracies above $0.47$, which
+is an improvement over LSTMs over the English language which achieves a 
+perplexity of $85$ and an accuracy of $0.27$. This research can have further
+meaning in other areas such as syntactic template suggestion and automated bug
+patching.
 \end{abstract} 
 
 \section{Introduction}
@@ -187,8 +192,9 @@ The corresponding AST, as given by the Eclipse AST parser, appears in Figure \re
 \begin{figure}[ht]
 \vskip 0.2in
 \begin{center}
-\centerline{\includegraphics[width=\columnwidth]{ast.png}}
-\caption{The abstract syntax tree (AST) representation of of the Java statement \texttt{int x = obj.getInt();}}
+\centerline{\includegraphics[width=\columnwidth]{ast.eps}}
+\caption{The abstract syntax tree (AST) representation of of the Java statement
+\texttt{int x = obj.getInt();}}
 \label{ast-figure}
 \end{center}
 \vskip -0.2in
@@ -401,7 +407,7 @@ frequencies would be much higher than those of English words.
 \begin{tikzpicture}
 	\begin{axis}[
 	    %height=5cm,
-	    %width=8cm,
+	    width=\columnwidth,
 		xlabel=Word Rank,
 		ylabel=Frequency,
 		xmin=0,
@@ -433,6 +439,7 @@ curly braces) yields similar frequency distributions across all word ranks
 \begin{figure}
 \begin{tikzpicture}
 	\begin{axis}[
+	    width=\columnwidth,
 		xlabel=Word Rank,
 		ylabel=Frequency,
 		xmin=0,
@@ -585,7 +592,8 @@ the next word. Perplexity is the same metric that is used in
 We chose word-level perplexity was chosen as the metric for comparing the
 language models' performance on the given corpora since it provides
 a good measurement of the models overall ability to predict words
-in the given corpus. Perplexity for a given model is calculated
+in the given corpus \cite{sundermeyer2015feedforward}. 
+Perplexity for a given model is calculated
 by exponentiatiting (base $e$) the mean
 cross-entropy across all words in the test set. This is formally
 expressed as follows:
@@ -595,14 +603,15 @@ expressed as follows:
     P(L) = \exp\left(\frac{1}{N}\sum^{N}_{i=1} H(L,w_i)\right)
 \end{equation}
 
-where $N$ is the test data set size, $L$ is language model, $w_i$
+where $N$ is the test data set size, $L$ is the language model, $w_i$
 is the $i$th word in the test set, and $H(L, w_i)$ is the natural log
-cross-entropy from $w_i$ to the prediction given by $L(w_i)$. A lower perplexity represents a language model with better prediction
-performance.
+cross-entropy from $w_i$ to the prediction given by $L(w_i)$. A lower
+perplexity represents a language model with better predictiive
+performance \cite{wang2016parallel}.
 
 The cross-entropy is the opposite of summing the
-product of the probability of that word appearing ($1$ for the
-correct word and $0$ for all other incorrect words) and the
+product of the probability of that word appearing, i.e., $1$ for the
+correct word and $0$ for all other incorrect words, and the
 natural logarithm of the output value of LSTM's softmax layer.
 The cross-entropy is defined as follows:
 
@@ -697,23 +706,37 @@ made by the model.
 \end{table}
 
 The the perplexities achieved on the copora by the LSTM are displayed in
-Table \ref{result-table}. All four Java data sets showed a drastic reduction
-in perplexity compared to the English data set. The perplexity achieved
-on the English dataset is similar to that reported by \citet{LSTMArticle}.
-The top-$k$ accuracies for each copora are displayed in Table
-\ref{topk-table}.
-This suggests that the LSTM was able to more accurately model the
-pre-processed Java source code than it could English. This is also backed
-up by the higher accuracy achieved on the Java corpora as compared to the
-English corpus.
+Table \ref{result-table}. The smallest perplexity for non-english data sets 
+was measured for the Spring Framework, while the largest was for the JDK data. 
+The table also indicates that all four Java data sets showed a drastic 
+reduction in perplexity compared to the English data set. Nonetheless, the 
+perplexity achieved on the English dataset is similar to that reported by 
+\citet{LSTMArticle}. These results indicate the superiority of LSTMs on both
+programming languages and a language as complex as the English language.
+
+Table \ref{topk-table} shows the top-$k$ accuracies for each copora.
+Clearly, results suggest that the proposed LSTM model is able to more
+accurately model pre-processed Java source code than it can English. The table
+also indicates that, for the English data set, the use of a large number of
+predictors can dramatically increase the overall rate of predictors with the
+correct next word; e.g., increasing from one to ten predictors at least doubled
+the proportion of predictors. There is a similar effect over Java-based data
+sets; however, in these data sets the predictors start at a higher proportion
+than with English.
+
+%% Here it could be interesting to insert an actual example of the piece of
+%% code that was better predicted among all of them (something line in section
+%% 2.2), and also one of the worst predicted of all. If that is available,
+%% maybe we can show how things are predicted as you go, word by word.
 
 \section{Conclusion}
 
 In this paper, we have presented a way of modelling a predictive strategy
-over the Java programming language using an LSTM. We have shown that
+over the Java programming language using an LSTM. Using datasets such as PTB,
+JDK, Guava, Elastic Search, and Spring we have shown that
 LSTMs are suitable in predicting the next syntactic statements of source
 code based on preceding statements. Results indicate that the indicate
-that LSTMs can achieve lower perplexities (and are, hence, better models)
+that LSTMs can achieve lower perplexities and, hence, produce accurate models
 on the Java datasets than the English dataset.
 
 The pre-processed Java code represents a very general and cursory
