@@ -120,18 +120,6 @@ quickly \cite{LSTMArticle}. LSTMs are a sequence-to-word language
 model which means given a sequence of words (e.g., words in the
 beginning of a sentence), the model will produce a probability
 distribution describing what the next word in the sequence is.
-\iffalse This does not seem necessary if we are trying to be terse
-Equation \ref{seqtoword} illustrates the basic structure of a
-sequence-to-word language model where $L$ is the language model,
-$w_n$ is the $n$th word in the sequence, and $W_{n+1}$ is a vector
-describing the probability distribution describing which word $w_{n+1}$
-is.
-
-\begin{equation}
-\label{seqtoword}
-    L(w_1, w_2, w_3, \dots, w_n) = W_{n+1}
-\end{equation}
-\fi
 
 In terms of the Java programming language,
 we are specifically investigating next-statement prediction in method
@@ -163,8 +151,8 @@ syntactic element (e.g., statement, boolean operator, literal integer).
 Method bodies are, in particular, comprised of statements which, more or 
 less, represent a self-contained action. Each of these statements is the 
 root of its own sub-AST which represents the syntactic structure of only 
-that statement. For this reason, the statements are the smallest 
-independent, semantically meaningful unit of a method body and are suitable 
+that statement. In this way, statements are 
+independent, semantically meaningful units of a method body which are suitable 
 to be tokenized for input into the RNN.
 
 Nguyen et al. \cite{Nguyen} studied a model for syntactic statement prediction 
@@ -181,17 +169,7 @@ The RNN model described in \citet{LSTMArticle} specifically uses space-delimited
 text strings; hence, when the statement ASTs are tokenized, they 
 must be represented as space-delimited text strings.
 
-\iffalse This will save a small bit of space.
-To show the tokenization of Java source, take the following Java statement:
-
-\begin{verbatim}
-    int x = obj.getInt();
-\end{verbatim}
-\fi
-
-
-\begin{figure}%[ht]
-%\vskip 0.2in
+\begin{figure}
 \begin{center}
 \centerline{\includegraphics[height=25mm]{ast.eps}}
 \caption{The abstract syntax tree (AST) representation of of the Java statement
@@ -209,23 +187,11 @@ This statement, in turn, would be transformed into the following token\footnote{
 tokenized version of the AST since the syntax is adequately represented
 by starting with the root node's children.}:
 
-%~%~% Say why `VariableDeclarationStatement` does not appear
-
-%\begin{addmargin}[0.5in]{0in}
 \begin{verbatim}
     _PrimitiveType_VariableDeclarationFragment(_SimpleName
     _MethodInvocation(_SimpleName_SimpleName))) 
 \end{verbatim}
-%
-%   _60(_39_59(_42_32(_42_42)))
-%\end{addmargin}
 
-%In the representation used for the LSTM, the AST node names are replaced with
-%integer IDs corresponding to each type of AST node
-%(e.g., $60$ corresponds to ``PrimitiveType'' nodes and $42$ corresponds to
-%``SimpleName'' nodes).
-%We have included the named version to demonstrate
-%how it fits in with the visual AST.
 Individual AST nodes\footnote{In actual data sets, the AST node names are replaced with unique
 ID numbers in order to save space; the structure, though, is identical in both cases.}
 are separated by underscores (``\texttt{\_}'') and parentheses are used
@@ -245,61 +211,17 @@ Each statement in the method body is tokenized just as the single statement
 was above; from here, the tokens are delimited with spaces. Braces, while not 
 statements, are included (denoted by ``\texttt\{'' and
 ``\texttt\}'') to retain the semantic structure of the method body. 
-%Note that the return type and parameters are included as the first 
-%token with a leading ``\texttt('' to denote that it is a method
-%signature (no other statement tokens begin with an open paren).
-%The method above becomes the following sequence of tokens:
 
 The space-delimited sequence of these tokens forms a ``sentence'' which  
 directly  correlates to the body of a single Java method. These individual  
 tokens will then comprise the vocabulary that the LSTM network uses to train 
 and make predictions.
-
-\iffalse This turns out to be way too long for ICANN paper
-Now let us consider the following;
-
-%\begin{addmargin}[0.5in]{0in}
-\begin{verbatim}
-    int foo() {
-        int x = obj.getInt();
-        if (x > 0) {
-            x = x + 5;
-        }
-        return x;
-    }
-\end{verbatim}
-%\end{addmargin}
-
-Each statement in the method body is tokenized just as the single statement 
-was above where the tokens are space delimited. Braces, while not 
-statements, are included (denoted by ``\texttt\{'' and
-``\texttt\}''  to retain the semantic structure of the method body. 
-Note that the return type and parameters are included as the first 
-token with a leading ``\texttt('' to denote that it is a method
-signature (no other statement tokens begin with an open paren).
-The method above becomes the following sequence of tokens:
-%Just as before, the named and the numbered  version are displayed for clarity.
-
-%\begin{addmargin}[0.5in]{0in}
-\begin{verbatim}
-    (_39_42 { _60(_39_59(_42_32(_42_42)))
-     _25(_27(_42_34) { _21(_7(_42_27(_42_
-     34))) } _41(_42) } 
-\end{verbatim}
-%\end{addmargin}
-
-
-The space-delimited sequence of these tokens forms a ``sentence'' which  
-directly  correlates to the body of a single Java method. These individual  
-tokens will then comprise the vocabulary that the LSTM network uses to train 
-and make predictions.
-\fi
 
 \subsection{English and Java Source Corpora Used}
 
 Similarly to \citet{LSTMArticle}, we are using the Penn Treebank (PTB) for the
 English language corpus as it provides an effective, general sample of the English
-language. %~%~% Back this up?
+language.
 For the Java programming languages, four different corpora were each built
 by processing (as described above) a large repository of Java source code. The
 repositories used were
@@ -315,39 +237,6 @@ Java source contains ``punctuation'' only in the form of statement
 body-delimiting curly braces (``\texttt\{'' and ``\texttt\}'')
 since these are integral to the semantic structure of source code.
 All English and Java corpora use a metatoken to mark the end of a sentence.
-
-% BB: Is the table explanation sufficient?
-
-\iffalse Do I \textit{really} the size information?
-While the PTB data set is larger than the Java corpora, all datasets
-are within one order of magnitude in size. The exact sizes of the
-data sets are given by Table \ref{size-table}.
-
-\begin{table}[t]
-    \caption{Total size of each corpora measured in words. The approximate
-    split between training, validation, and test data is $80\%$, $10\%$,
-    and $10\%$ respectively.}
-    \label{size-table}
-    \vskip 0.15in
-    \begin{center}
-    %\begin{small}
-    \begin{tabular}{lr}
-    \hline
-    Corpus & \multicolumn{1}{c}{Size} \\
-    \hline
-    PTB                 & $1085779$ \\
-    JDK                 & $303560$ \\
-    Guava               & $259686$ \\
-    ElasticSearch       & $561697$ \\
-    Spring Framework    & $526968$ \\
-    \hline
-    \end{tabular}
-    %\end{small}
-    \end{center}
-    \vskip -0.1in
-\end{table}
-\fi
-
 
 \subsection{Vocabulary Comparison}
 
@@ -411,64 +300,11 @@ frequencies would be much higher than those of English words.
 \label{english-frequency}
 \end{figure}
  
-%Adjusting the four Java corpora in the same way (removing the left and right
-%curly braces) yields similar frequency distributions across all word ranks
-%(see Figure \ref{java-frequency}).
- 
-\iffalse
-\begin{figure}
-\begin{tikzpicture}
-	\begin{axis}[
-	    height=5cm,
-		xlabel=Word Rank,
-		ylabel=Frequency,
-		xmin=0,
-		xmax=30]
-		\addlegendentry{JDK}
-		\addplot table [
-	    	x=rank,
-		    y=JDK,
-		    mark=none,
-		    col sep=tab] {freq.dat};
-		\addlegendentry{Guava}
-		\addplot table [
-	    	x=rank,
-		    y=Guava,
-		    mark=none,
-		    col sep=tab] {freq.dat};
-		\addlegendentry{ElasticSearch}
-		\addplot table [
-	    	x=rank,
-		    y=ElasticSearch,
-		    mark=none,
-		    col sep=tab] {freq.dat};
-		\addlegendentry{Spring Framework}
-		\addplot table [
-	    	x=rank,
-		    y=SpringFramework,
-		    mark=none,
-		    col sep=tab] {freq.dat};
-	\end{axis}
-\end{tikzpicture} 
-\caption{Comparison of Java corpora frequency distributions}
-\label{java-frequency}
-\end{figure}
-\fi
-
-\iffalse
-    Another consideration when comparing the English and Java corpora are the
-    prevalence of the metatokens \texttt{<eos>} denoting the end of a
-    sentence and \texttt{<unk>} denoting a token not contained in the vocabulary.
-\fi
-
-
-%~%~% Should I use the adjusted metrics here?
 \begin{table}[t]
-    \caption{Proportion and rank of the metatoken %s \texttt{<eos>} and
+    \caption{Proportion and rank of the metatoken 
     \texttt{<unk>}. Proportions and ranks are from the adjusted Java corpora
     with the left and right curly braces removed.}
     \label{sample-table}
-    %\vskip 0.15in
     \begin{center}
     \setlength{\tabcolsep}{\tabhorzspacing}
     {\renewcommand{\arraystretch}{\tabvertspacing}
@@ -483,7 +319,6 @@ frequencies would be much higher than those of English words.
     Spring Framework    & $0.0873$ & $2$  \\
     \hline
     \end{tabular}}
-    %\end{small}
     \end{center}
     \vskip -7mm
 \end{table}
@@ -507,13 +342,6 @@ proportion is not significantly higher than that of the PTB since
 that would suggest that $10,000$ is too small a vocabulary size to describe
 the tokenized Java source code.
 
-\iffalse
-It is the case, though, that all of the Java copora show much higher
-\texttt{<eos>}. This indicates that the sentences of the Java copora have
-a lower average word count.
-%~%~% Does this affect anything?
-\fi
-
 \section{Language Modeling}
 \label{language-modeling}
 
@@ -526,9 +354,6 @@ network, a type of RNN, as described in
 \citet{LSTMArticle}. This particular LSTM uses regularization via 
 dropout to act as a good language model for natural languages
 such as English \cite{LSTMArticle}.
-%when measuring word level perplexity 
-
-% BB: Talk about training size at all?
 
 The LSTM's specific configuration was the same as the ``medium''
 configuration described in \citet{LSTMArticle} with the exception
@@ -540,8 +365,6 @@ was beginning to overfit the training data and that further training
 would not improve performance on the test data.
 Specifically, this model contains two RNN layers with a vocabulary
 size of $10,000$ words.
-
-% BB: Do I need to be more specific?
 
 Each corpora was split into partitions such that $80\%$ was training data
 and the remaining $20\%$ was split evenly between test and validation
@@ -598,51 +421,8 @@ word $w$. Additionally, mean word-level accuracy was calculated for
 each language model considering the top $1$, $5$, and $10$ predictions
 made by the model.
 
-\iffalse
-\begin{equation}
-    H(L,w) = - \ln L_w(w)
-\end{equation}
-\fi
-
-
-% PR: Is there any way you could refer to other work's results
-%     as a comparison (word?)? You need to discuss the results more.
-%     What does it all mean? Why does it work?
-
-% BB
-% Maybe? http://www1.icsi.berkeley.edu/Speech/docs/HTKBook3.2/node188_mn.html
-% Comparison is not very easy since perplexity is sensitive to various
-% changes in the LM used.
-
-% BB: Should I measure the entropy of the corpora?
-
 \section{Results}
 
-\iffalse
-\begin{table}[t]
-    \caption{Perplexities given by Equation \ref{perplexity}.}
-        %Entropy is the Shannon entropy calculated using
-        %$\ln(P) / \ln(2)$.}
-    \label{result-table}
-    \vskip 0.15in
-    \begin{center}
-    %\begin{small}
-    \begin{tabular}{lcl}
-    \hline
-    Corpus & Perplexity & Language \\
-    \hline
-    PTB                 & $85.288$ & English \\
-    JDK                 & $21.808$ & Java \\
-    Guava               & $18.678$ & Java \\
-    ElasticSearch       & $11.397$ & Java \\
-    Spring Framework    & $11.318$ & Java \\
-    \hline
-    \end{tabular}
-    %\end{small}
-    \end{center}
-    \vskip -0.1in
-\end{table}
-\fi
 
 \begin{table}[t]
     \caption{Perplexities ($P$) given by Equation \ref{perplexity}.
@@ -650,12 +430,9 @@ made by the model.
     word in their top-$k$ predictions.
     ``ElasticSearch'' is written as ``ES'' and ``Spring
     Framework'' is written as ``SF''.}
-        %Entropy is the Shannon entropy calculated using
-        %$\ln(P) / \ln(2)$.}
     \label{topk-table}
     \vskip 0.15in
     \begin{center}
-    %\begin{small}
     \setlength{\tabcolsep}{\tabhorzspacing}
     {\renewcommand{\arraystretch}{\tabvertspacing}
     \begin{tabular}{lccccl}
@@ -669,7 +446,6 @@ made by the model.
     SF    & $11.318$ & $0.560$ & $0.722$ & $0.783$ & Java \\
     \hline
     \end{tabular}}
-    %\end{small}
     \end{center}
     \vskip -0.1in
 \end{table}
@@ -693,11 +469,6 @@ the proportion of predictors. There is a similar effect over Java-based data
 sets; however, in these data sets the predictors start at a higher proportion
 than with English.
 
-%% Here it could be interesting to insert an actual example of the piece of
-%% code that was better predicted among all of them (something line in section
-%% 2.2), and also one of the worst predicted of all. If that is available,
-%% maybe we can show how things are predicted as you go, word by word.
-
 \section{Conclusion}
 
 In this paper, we have presented a way of modeling a predictive strategy
@@ -712,26 +483,11 @@ The pre-processed Java code represents a very general and cursory
 representation of the original code as it does not include anything such
 as variable names or variable types. Future research along these lines
 could account for information such as variable types, variable names, etc.
-%Additionally, other machine learning methods like
-%a naive Bayesian classifier could be paired with the LSTM to predict
-%variable names as well as the syntactic structure of the next statement.
 It would also be beneficial to compare the modeling of Java with other
 programming languages or to train the model across multiple repositories
 in one language.
-
-
-
-
-%articles , conference publications \cite{langley00}, book chapters \cite{Newell81}, books \cite{DudaHart2nd}, edited volumes \cite{MachineLearningI}, 
-
-% In the unusual situation where you want a paper to appear in the
-% references without citing it in the main text, use \nocite
-%\nocite{langley00}
 
 \bibliographystyle{plainnat}
 \bibliography{example_paper}
 
 \end{document} 
-
-
-
