@@ -83,13 +83,13 @@ language. Java source code from four different repositories
 undergoes a transformation that preserves the logical structure of the 
 source code and removes the code's various specificities such as 
 variable names and literal values. Such datasets and an additional English 
-language corpora are used to train and test standard LSTMs' ability to predict
+language corpus are used to train and test standard LSTMs' ability to predict
 the next element in the sequence. 
 Results suggest that LSTMs can effectively model
 Java code achieving perplexities under $22$ and accuracies above $0.47$, which
-is an improvement over LSTMs over the English language which achieves a 
-perplexity of $85$ and an accuracy of $0.27$. This research can have further
-meaning in other areas such as syntactic template suggestion and automated bug
+is an improvement over LSTM's performance on the English language which demonstrated
+a perplexity of $85$ and an accuracy of $0.27$. This research can have
+applicability in other areas such as syntactic template suggestion and automated bug
 patching.
 \end{abstract} 
 
@@ -101,21 +101,21 @@ to natural languages, but techniques used to model natural languages
 such as $n$-gram, graphed-based, and context sensitive models
 can be applicable to programming languages as well
 \cite{Allamanis} \cite{Nguyen} \cite{Asaduzzaman}.
-One such an application of a language model is next-word prediction
+One such application of a language model is next-word prediction
 which can prove very useful for tasks such as syntactic template
-suggestion and bug patching
+suggestion or bug patching
 \cite{Nguyen} \cite{Kim}.
 There has been research into programming language models
 which use Bayesian statistical inference ($n$-gram models)
 to perform next-word prediction \cite{Allamanis}.
 Yet some of the most successful natural language models have been
 built using recurrent neural networks (RNNs); their ability to
-remember data over a sequences of tokens makes them particularly apt for
-word prediction \cite{LSTMArticle}.
+remember information over a sequence of tokens makes them particularly apt for
+next-word prediction \cite{LSTMArticle}.
 
 Specifically, long-short term memory (LSTM) RNNs have further improved
 the basic RNN model by increasing the ability of an RNN to remember
-data over a longer sequence of input without the signal decaying
+data over a long sequence of input without the signal decaying
 quickly \cite{LSTMArticle}. LSTMs are a sequence-to-word language
 model which means given a sequence of words (e.g., words in the
 beginning of a sentence), the model will produce a probability
@@ -133,11 +133,12 @@ is.
 \end{equation}
 \fi
 
-We are specifically investigating next-statement prediction in method
+In terms of the Java programming language,
+we are specifically investigating next-statement prediction in method
 bodies. While other parts of Java source code (e.g., class fields,
 import statements) do have semantic significance, method bodies make up
 the functional aspect of source code\footnote{
-Functional insofar as method bodies describe that actual
+Functional insofar as method bodies describe the active (non-declarative)
 behavior of the program.} and most resemble natural language sentences.
 Just as individual semantic tokens (words) comprise natural language
 sentences, statements, which can be thought of as semantic tokens,
@@ -154,9 +155,9 @@ bodies comprised of statements.
 
 \section{Tokenizing Java Source Code}
 
-We are specifically looking at predicting the syntactic structure  of next 
+We are specifically looking at predicting the syntactic structure  of the next 
 statement in within Java source code method bodies. The syntactic structure 
-of a complete piece of source code is typically represented in an abstract 
+of a complete piece of source code can be represented as an abstract 
 syntax tree (AST) where each node of the tree represents a distinct 
 syntactic element (e.g., statement, boolean operator, literal integer). 
 Method bodies are, in particular, comprised of statements which, more or 
@@ -177,7 +178,7 @@ produce an RNN-based model.
 \subsection{Statement-Level AST Tokenization}
 
 The RNN model described in \citet{LSTMArticle} specifically uses space-delimited 
-text strings, hence, when the statement ASTs are tokenized, they 
+text strings; hence, when the statement ASTs are tokenized, they 
 must be represented as space-delimited text strings.
 
 \iffalse This will save a small bit of space.
@@ -189,7 +190,7 @@ To show the tokenization of Java source, take the following Java statement:
 \fi
 
 
-\begin{figure}[ht]
+\begin{figure}%[ht]
 %\vskip 0.2in
 \begin{center}
 \centerline{\includegraphics[height=25mm]{ast.eps}}
@@ -241,9 +242,9 @@ variable and function names.
 Since a method in Java is essentially a series of statements, method-level
 tokenization is straightforward.
 Each statement in the method body is tokenized just as the single statement 
-was above where the tokens are space delimited. Braces, while not 
+was above; from here, the tokens are delimited with spaces. Braces, while not 
 statements, are included (denoted by ``\texttt\{'' and
-``\texttt\}''  to retain the semantic structure of the method body. 
+``\texttt\}'') to retain the semantic structure of the method body. 
 %Note that the return type and parameters are included as the first 
 %token with a leading ``\texttt('' to denote that it is a method
 %signature (no other statement tokens begin with an open paren).
@@ -299,10 +300,11 @@ and make predictions.
 Similarly to \citet{LSTMArticle}, we are using the Penn Treebank (PTB) for the
 English language corpus as it provides an effective, general sample of the English
 language. %~%~% Back this up?
-For the Java programming languages, four different corpora were built from
-the source code of projects (one project is built into one corpus). The
-Java Development Kit (JDK), Google Guava, ElasticSearch, and Spring Framework.
-The JDK is a good reference for Java since it is largest implementation
+For the Java programming languages, four different corpora were each built
+by processing (as described above) a large repository of Java source code. The
+repositories used were
+the Java Development Kit (JDK), Google Guava, ElasticSearch, and Spring Framework.
+The JDK is a good reference for Java since it is a widely-used implementation
 of the Java language; the other three projects were selected based on their
 high popularity on GitHub in addition to the fact they are
 Java-based projects.
@@ -312,6 +314,7 @@ PTB does not contain any punctuation while the tokenized
 Java source contains ``punctuation'' only in the form of statement
 body-delimiting curly braces (``\texttt\{'' and ``\texttt\}'')
 since these are integral to the semantic structure of source code.
+All English and Java corpora use a metatoken to mark the end of a sentence.
 
 % BB: Is the table explanation sufficient?
 
@@ -348,10 +351,10 @@ data sets are given by Table \ref{size-table}.
 
 \subsection{Vocabulary Comparison}
 
-In addition to preserving the logical structure of the source code when
-tokenizing it, another goal of the specific method of tokenization was to
+In addition to preserving the logical structure of the source code,
+another goal of the specific method of tokenization was to
 produce a vocabulary with a frequency distribution similar to that of
-English (compared against the English corpus used, that is). If the same
+the English corpus. If the same
 Java statement tokens appear too frequently, the tokenization might be
 generalizing the Java source too much such that it loses the underlying
 semantics. If the statement tokens, instead, all have a very low frequency
@@ -369,6 +372,7 @@ JDK source code. The rate of occurrence for the highest
 ranked words is significantly higher in the JDK than in the PTB, but
 the frequency distributions track closely together beyond the fifth-ranked
 words.
+Generally, all four Java corpora showed similar frequency distributions.
 
 The statistical similarities between the English and the translated Java
 corpora suggest that the Java statement tokens have an adequate amount of
@@ -376,7 +380,6 @@ detail in terms of mimicking English words. If the Java statement tokens
 were too detailed, their frequencies would be far lower than those of English
 words; if the Java statement tokens were not detailed enough, their
 frequencies would be much higher than those of English words.
-Generally, all four Java corpora showed similar frequency distributions.
 
 \begin{figure}
 \centering
@@ -461,7 +464,7 @@ Generally, all four Java corpora showed similar frequency distributions.
 
 %~%~% Should I use the adjusted metrics here?
 \begin{table}[t]
-    \caption{Proportion and rank of the metatoken%s \texttt{<eos>} and
+    \caption{Proportion and rank of the metatoken %s \texttt{<eos>} and
     \texttt{<unk>}. Proportions and ranks are from the adjusted Java corpora
     with the left and right curly braces removed.}
     \label{sample-table}
@@ -492,11 +495,12 @@ Due to the nature of LSTMs, the vocabulary of the language model is finite;
 hence, any word not contained in the vocabulary is considered unknown.
 We specifically used a vocabulary size of $10,000$. A vocabulary size which
 is too small will fail to represent enough words in the corpus; the result
-is the LSTM seeing a high proportion of the \texttt{unk} metatoken. A
+is the LSTM seeing a high proportion of the \texttt{<unk>} metatoken. A
 vocabulary which is too large increases the computation required during
 training and inference.
 The proportion of \texttt{<unk>} tokens in both the English and the Java
-source data sets (save for ElasticSearch) are $<10\%$ which indicates that
+source data sets (save for ElasticSearch\footnote{ElasticSearch had a
+proportion of $16\%$}) are $<10\%$ which indicates that
 the $10,000$ word vocabulary accounts for approximately $90\%$ of the corpus'
 words by volume. It is important that the Java corpora's \texttt{<unk>}
 proportion is not significantly higher than that of the PTB since
@@ -517,7 +521,7 @@ a lower average word count.
 
 In order to make a good comparison between language modeling in English
 and Java, a model with demonstrated success at modeling English was
-chosen. The model selected was a LSTM neural
+chosen. The model selected was an LSTM neural
 network, a type of RNN, as described in
 \citet{LSTMArticle}. This particular LSTM uses regularization via 
 dropout to act as a good language model for natural languages
@@ -544,7 +548,7 @@ and the remaining $20\%$ was split evenly between test and validation
 data. Perplexity, the performance metric of the LSTM, is determined by the
 ability of the LSTM to perform sequence-to-word prediction on the test
 set of that corpus. Perplexity represents how well the prediction (in the
-form a probability distribution) given by the LSTM matches the actual
+form of a probability distribution) given by the LSTM matches the actual
 word which comes next in the sentence. A low perplexity means that the
 language model's predicted probability distribution matched closely the
 actual probability distribution, that is, it was better able to predict
@@ -555,7 +559,7 @@ the next word. Perplexity is the same metric that is used in
 
 We chose word-level perplexity was chosen as the metric for comparing the
 language models' performance on the given corpora since it provides
-a good measurement of the models overall ability to predict words
+a good measurement of the model's overall ability to predict words
 in the given corpus \cite{sundermeyer2015feedforward}. 
 Perplexity for a given model is calculated
 by exponentiating (base $e$) the mean
@@ -564,7 +568,7 @@ expressed as follows:
 
 \begin{equation}
 \label{perplexity}
-    P(L) = \exp\left(\frac{1}{N}\sum^{N}_{i=1} H(L,w_i)\right)
+    P(L) = \exp\left(\frac{1}{N}\sum^{N}_{i=1} H(L,w_i)\right) ,
 \end{equation}
 
 where $N$ is the test data set size, $L$ is the language model, $w_i$
@@ -581,7 +585,7 @@ The cross-entropy is defined as follows:
 
 \begin{equation}
 \label{cross-entropy}
-    H(L,w) = - \sum_{i=1}^V p(w_i) \ln L(w_i) = - \ln L_w(w)
+    H(L,w) = - \sum_{i=1}^V p(w_i) \ln L(w_i) = - \ln L_w(w) ,
 \end{equation}
 
 where $V$ is the vocabulary size and $p(w_i)$ is the probability of
