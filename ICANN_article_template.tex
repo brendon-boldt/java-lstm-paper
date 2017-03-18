@@ -1,28 +1,9 @@
-
-%%%%%%%%%%%%%%%%%%%%%%% file typeinst.tex %%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% This is the LaTeX source for the instructions to authors using
-% the LaTeX document class 'llncs.cls' for contributions to
-% the Lecture Notes in Computer Sciences series.
-% http://www.springer.com/lncs       Springer Heidelberg 2006/05/04
-%
-% It may be used as a template for your own input - copy it
-% to a new file with a new name and use it as the basis
-% for your article.
-%
-% NB: the document class 'llncs' has its own and detailed documentation, see
-% ftp://ftp.springer.de/data/pubftp/pub/tex/latex/llncs/latex2e/llncsdoc.pdf
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 \documentclass[runningheads,a4paper]{llncs}
 
 \usepackage{amssymb}
 \setcounter{tocdepth}{3}
 \usepackage{graphicx}
 
-\usepackage[sort,numbers]{natbib}
 \usepackage{tikz,pgfplots}
 \pgfplotsset{compat=1.14}
 
@@ -84,7 +65,7 @@ undergoes a transformation that preserves the logical structure of the
 source code and removes the code's various specificities such as 
 variable names and literal values. Such datasets and an additional English 
 language corpus are used to train and test standard LSTMs' ability to predict
-the next element in the sequence. 
+the next element in a sequence. 
 Results suggest that LSTMs can effectively model
 Java code achieving perplexities under $22$ and accuracies above $0.47$, which
 is an improvement over LSTM's performance on the English language which demonstrated
@@ -103,7 +84,7 @@ can be applicable to programming languages as well
 \cite{Allamanis} \cite{Nguyen} \cite{Asaduzzaman}.
 One such application of a language model is next-word prediction
 which can prove very useful for tasks such as syntactic template
-suggestion or bug patching
+suggestion and bug patching
 \cite{Nguyen} \cite{Kim}.
 There has been research into programming language models
 which use Bayesian statistical inference ($n$-gram models)
@@ -111,12 +92,12 @@ to perform next-word prediction \cite{Allamanis}.
 Yet some of the most successful natural language models have been
 built using recurrent neural networks (RNNs); their ability to
 remember information over a sequence of tokens makes them particularly apt for
-next-word prediction \cite{LSTMArticle}.
+next-word prediction \cite{Zaremba}.
 
 Specifically, long-short term memory (LSTM) RNNs have further improved
 the basic RNN model by increasing the ability of an RNN to remember
 data over a long sequence of input without the signal decaying
-quickly \cite{LSTMArticle}. LSTMs are a sequence-to-word language
+quickly \cite{Zaremba}. LSTMs are a sequence-to-word language
 model which means given a sequence of words (e.g., words in the
 beginning of a sentence), the model will produce a probability
 distribution describing what the next word in the sequence is.
@@ -165,9 +146,17 @@ produce an RNN-based model.
 
 \subsection{Statement-Level AST Tokenization}
 
-The RNN model described in \citet{LSTMArticle} specifically uses space-delimited 
+The RNN model described in Zaremba et al. \cite{Zaremba} specifically uses space-delimited 
 text strings; hence, when the statement ASTs are tokenized, they 
 must be represented as space-delimited text strings.
+
+To show the tokenization of Java source, take the following Java statement:
+\texttt{int x = obj.getInt();}.
+The corresponding AST, as given by the Eclipse AST parser, appears in Figure \ref{ast-figure} \cite{Eclipse}.
+This statement, in turn, would be transformed as follows\footnote{
+\texttt{VariableDeclarationStatement} is not included in the
+tokenized version of the AST since the syntax is adequately represented
+by starting with the root node's children.}:
 
 \begin{figure}
 \begin{center}
@@ -179,25 +168,27 @@ must be represented as space-delimited text strings.
 \vskip -7mm
 \end{figure} 
 
-To show the tokenization of Java source, take the following Java statement:
-\texttt{int x = obj.getInt();}.
-The corresponding AST, as given by the Eclipse AST parser, appears in Figure \ref{ast-figure} \cite{Eclipse}.
-This statement, in turn, would be transformed into the following token\footnote{
-\texttt{VariableDeclarationStatement} is not included in the
-tokenized version of the AST since the syntax is adequately represented
-by starting with the root node's children.}:
 
 \begin{verbatim}
     _PrimitiveType_VariableDeclarationFragment(_SimpleName
     _MethodInvocation(_SimpleName_SimpleName))) 
+    
+    _60(_39_59(_42_32(_42_42)))
 \end{verbatim}
 
-Individual AST nodes\footnote{In actual data sets, the AST node names are replaced with unique
-ID numbers in order to save space; the structure, though, is identical in both cases.}
+The first token uses the AST node names while second token
+represents the same AST by instead using
+integer IDs corresponding to the AST node names as assigned by
+the Eclipse parser
+(e.g., $60$ corresponds to ``PrimitiveType'' nodes and $42$ corresponds to
+``SimpleName'' nodes). Using integer IDs saves space and is the format
+used in the actual LSTM.
+
+Individual AST nodes
 are separated by underscores (``\texttt{\_}'') and parentheses are used
 to denote a parent-child relationship so that the tree structure of
 the statement is preserved. In fact, it is possible  to recreate the
-syntax of the original source  code from the the tokens; thus, this 
+syntax of the original source  code from the tokens; thus, this 
 tokenization is lossless in terms of  \textit{syntactical} information 
 yet lossy in other areas. For example, variable and function names are
 discarded during the translation to make the model independent of
@@ -205,21 +196,45 @@ variable and function names.
 
 \subsection{Method-Level Tokenization}
 
-Since a method in Java is essentially a series of statements, method-level
-tokenization is straightforward.
+Consider the following Java method:
+
+\begin{verbatim}
+    int foo() {
+        int x = obj.getInt();
+        if (x > 0) {
+            x = x + 5;
+        }
+        return x;
+    }
+\end{verbatim}
+
 Each statement in the method body is tokenized just as the single statement 
-was above; from here, the tokens are delimited with spaces. Braces, while not 
+was above, and the resulting tokens are delimited using spaces. Braces, while not 
 statements, are included (denoted by ``\texttt\{'' and
 ``\texttt\}'') to retain the semantic structure of the method body. 
+%It is the case that the return type and parameters are included as the first 
+%token with a leading ``\texttt('' to denote that it is a method
+%signature.
+The method above becomes the following sequence of tokens:
 
-The space-delimited sequence of these tokens forms a ``sentence'' which  
-directly  correlates to the body of a single Java method. These individual  
-tokens will then comprise the vocabulary that the LSTM network uses to train 
+\begin{verbatim}
+    (_39_42 { _60(_39_59(_42_32(_42_42)))
+     _25(_27(_42_34) { _21(_7(_42_27(_42_
+     34))) } _41(_42) } 
+\end{verbatim}
+
+The sequence of these tokens forms a ``sentence'' which  
+the represents body of a Java method.
+Sentences in the dataset are separated by the \texttt{<eos>} metatoken
+to mark the end of a sentence.
+These sentences of
+tokens will then comprise the corpus that the LSTM network uses to train 
 and make predictions.
+
 
 \subsection{English and Java Source Corpora Used}
 
-Similarly to \citet{LSTMArticle}, we are using the Penn Treebank (PTB) for the
+Similarly to Zaremba et al. \cite{Zaremba}, we are using the Penn Treebank (PTB) for the
 English language corpus as it provides an effective, general sample of the English
 language.
 For the Java programming languages, four different corpora were each built
@@ -274,7 +289,7 @@ frequencies would be much higher than those of English words.
 \centering
 \begin{tikzpicture}
 	\begin{axis}[
-	    height=5cm,
+	    height=45mm,
 	    width=8cm,
 		xlabel=Word Rank,
 		ylabel=Frequency,
@@ -351,12 +366,12 @@ In order to make a good comparison between language modeling in English
 and Java, a model with demonstrated success at modeling English was
 chosen. The model selected was an LSTM neural
 network, a type of RNN, as described in
-\citet{LSTMArticle}. This particular LSTM uses regularization via 
+Zaremba et al. \cite{Zaremba}. This particular LSTM uses regularization via 
 dropout to act as a good language model for natural languages
-such as English \cite{LSTMArticle}.
+such as English \cite{Zaremba}.
 
 The LSTM's specific configuration was the same as the ``medium''
-configuration described in \citet{LSTMArticle} with the exception
+configuration described in Zaremba et al. \cite{Zaremba} with the exception
 that the data was trained for $15$ epochs instead of $39$ epochs.
 Beyond $15$ epochs (on both the English and Java datasets), the 
 training cost metric (perplexity) continued to decrease while the
@@ -376,7 +391,7 @@ word which comes next in the sentence. A low perplexity means that the
 language model's predicted probability distribution matched closely the
 actual probability distribution, that is, it was better able to predict
 the next word. Perplexity is the same metric that is used in
-\citet{LSTMArticle} to compare language models.
+Zaremba et al. \cite{Zaremba} to compare language models.
 
 \subsection{Language Model Metrics}
 
@@ -408,14 +423,21 @@ The cross-entropy is defined as follows:
 
 \begin{equation}
 \label{cross-entropy}
-    H(L,w) = - \sum_{i=1}^V p(w_i) \ln L(w_i) = - \ln L_w(w) ,
+    H(L,w) = - \sum_{i=1}^V p(w_i) \ln L(w_i) \, ,
 \end{equation}
 
 where $V$ is the vocabulary size and $p(w_i)$ is the probability of
 $w_i$ being the correct word. Since the probability for incorrect
 words is $0$ and the correct word is $1$, the sum can be reduced to
-$1$ times the the natural log of the probability of the correct word
+$-1$ times the the natural log of the probability of the correct word
 as given by the LSTM.
+Thus, the cross-entropy is simply
+
+\begin{equation}
+\label{simple-cross-entropy}
+    H(L,w) = - \ln L_w(w) \, .
+\end{equation}
+
 $L_w(w)$ represents the LSTM's softmax output specifically for the
 word $w$. Additionally, mean word-level accuracy was calculated for
 each language model considering the top $1$, $5$, and $10$ predictions
@@ -456,7 +478,7 @@ was measured for the Spring Framework, while the largest was for the JDK data.
 The table also indicates that all four Java data sets showed a drastic 
 reduction in perplexity compared to the English data set. Nonetheless, the 
 perplexity achieved on the English dataset is similar to that reported by 
-\citet{LSTMArticle}. These results indicate the superiority of LSTMs on both
+Zaremba et al. \cite{Zaremba}. These results indicate the superiority of LSTMs on both
 programming languages and a language as complex as the English language.
 
 Table \ref{topk-table} shows the top-$k$ accuracies for each copora.
@@ -487,7 +509,64 @@ It would also be beneficial to compare the modeling of Java with other
 programming languages or to train the model across multiple repositories
 in one language.
 
-\bibliographystyle{plainnat}
-\bibliography{example_paper}
+\begin{thebibliography}{1}
+
+\bibitem{Allamanis}
+Miltiadis Allamanis and Charles Sutton.
+\newblock Mining source code repositories at massive scale using language
+  modeling.
+\newblock In {\em Proceedings of the 10th Working Conference on Mining Software
+  Repositories}, MSR '13, pages 207--216, Piscataway, NJ, USA, 2013. IEEE
+  Press.
+
+\bibitem{Nguyen}
+Anh~Tuan Nguyen and Tien~N. Nguyen.
+\newblock Graph-based statistical language model for code.
+\newblock In {\em Proceedings of the 37th International Conference on Software
+  Engineering - Volume 1}, ICSE '15, pages 858--868, Piscataway, NJ, USA, 2015.
+  IEEE Press.
+
+\bibitem{Asaduzzaman}
+Muhammad Asaduzzaman, Chanchal~K. Roy, Kevin~A. Schneider, and Daqing Hou.
+\newblock A simple, efficient, context-sensitive approach for code completion.
+\newblock {\em Journal of Software: Evolution and Process}, 28(7):512--541,
+  2016.
+\newblock JSME-15-0030.R3.
+
+\bibitem{Kim}
+Dongsun Kim, Jaechang Nam, Jaewoo Song, and Sunghun Kim.
+\newblock Automatic patch generation learned from human-written patches.
+\newblock In {\em Proceedings of the 2013 International Conference on Software
+  Engineering}, ICSE '13, pages 802--811, Piscataway, NJ, USA, 2013. IEEE
+  Press.
+
+\bibitem{Zaremba}
+Wojciech Zaremba, Ilya Sutskever, and Oriol Vinyals.
+\newblock Recurrent neural network regularization.
+\newblock {\em CoRR}, abs/1409.2329, 2014.
+
+\bibitem{Eclipse}
+Eclipse Foundation.
+\newblock Eclipse documentation on the {AST} class.
+\newblock
+  \url{http://help.eclipse.org/luna/index.jsp?topic=%2Forg.eclipse.jdt.doc.isv%2Freference%2Fapi%2Forg%2Feclipse%2Fjdt%2Fcore%2Fdom%2FAST.html},
+  2016.
+\newblock Accessed: 2016-8-18.
+
+\bibitem{sundermeyer2015feedforward}
+Martin Sundermeyer, Hermann Ney, and Ralf Schl{\"u}ter.
+\newblock From feedforward to recurrent lstm neural networks for language
+  modeling.
+\newblock {\em IEEE/ACM Transactions on Audio, Speech and Language Processing
+  (TASLP)}, 23(3):517--529, 2015.
+
+\bibitem{wang2016parallel}
+Minsi Wang, Li~Song, Xiaokang Yang, and Chuanfei Luo.
+\newblock A parallel-fusion rnn-lstm architecture for image caption generation.
+\newblock In {\em Image Processing (ICIP), 2016 IEEE International Conference
+  on}, pages 4448--4452. IEEE, 2016.
+
+\end{thebibliography}
+
 
 \end{document} 
