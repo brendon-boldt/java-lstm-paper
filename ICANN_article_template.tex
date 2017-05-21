@@ -224,7 +224,7 @@ The method above becomes the following sequence of tokens:
 \end{verbatim}
 
 The sequence of these tokens forms a ``sentence'' which  
-the represents body of a Java method.
+represents the body of a Java method.
 Sentences in the dataset are separated by the \texttt{<eos>} metatoken
 to mark the end of a sentence.
 These sentences of
@@ -395,7 +395,7 @@ Zaremba et al. \cite{Zaremba} to compare language models.
 
 \subsection{Language Model Metrics}
 
-We chose word-level perplexity was chosen as the metric for comparing the
+We chose word-level perplexity as the metric for comparing the
 language models' performance on the given corpora since it provides
 a good measurement of the model's overall ability to predict words
 in the given corpus \cite{sundermeyer2015feedforward}. 
@@ -429,7 +429,7 @@ The cross-entropy is defined as follows:
 where $V$ is the vocabulary size and $p(w_i)$ is the probability of
 $w_i$ being the correct word. Since the probability for incorrect
 words is $0$ and the correct word is $1$, the sum can be reduced to
-$-1$ times the the natural log of the probability of the correct word
+$-1$ times the natural log of the probability of the correct word
 as given by the LSTM.
 Thus, the cross-entropy is simply
 
@@ -472,7 +472,7 @@ made by the model.
     \vskip -0.1in
 \end{table}
 
-The the perplexities achieved on the copora by the LSTM are displayed in
+The perplexities achieved on the copora by the LSTM are displayed in
 Table \ref{topk-table}. The smallest perplexity for non-English data sets 
 was measured for the Spring Framework, while the largest was for the JDK data. 
 The table also indicates that all four Java data sets showed a drastic 
@@ -497,8 +497,8 @@ In this paper, we have presented a way of modeling a predictive strategy
 over the Java programming language using an LSTM. Using datasets such as PTB,
 JDK, Guava, ElasticSearch, and Spring Framework we have shown that
 LSTMs are suitable in predicting the next syntactic statements of source
-code based on preceding statements. Results indicate that the indicate
-that LSTMs can achieve lower perplexities and, hence, produce more accurate models
+code based on preceding statements. Results indicate that the
+LSTMs can achieve lower perplexities and, hence, produce more accurate models
 on the Java datasets than the English dataset.
 
 The pre-processed Java code represents a very general and cursory
