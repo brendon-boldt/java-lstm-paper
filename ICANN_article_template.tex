@@ -156,7 +156,9 @@ The corresponding AST, as given by the Eclipse AST parser, appears in Figure \re
 This statement, in turn, would be transformed as follows\footnote{
 \texttt{VariableDeclarationStatement} is not included in the
 tokenized version of the AST since the syntax is adequately represented
-by starting with the root node's children.}:
+by starting with the root node's children.}
+%\footnote{Source code:
+%url{https://github.com/brendon-boldt/javalator/tree/master}}:
 
 \begin{figure}
 \begin{center}
@@ -366,7 +368,10 @@ In order to make a good comparison between language modeling in English
 and Java, a model with demonstrated success at modeling English was
 chosen. The model selected was an LSTM neural
 network, a type of RNN, as described in
-Zaremba et al. \cite{Zaremba}. This particular LSTM uses regularization via 
+Zaremba et al. \cite{Zaremba}.
+%\footnote{Source code:
+%\url{https://github.com/brendon-boldt/lstm-language-model}}
+This particular LSTM uses regularization via 
 dropout to act as a good language model for natural languages
 such as English \cite{Zaremba}.
 
@@ -472,7 +477,7 @@ made by the model.
     \vskip -0.1in
 \end{table}
 
-The perplexities achieved on the copora by the LSTM are displayed in
+The perplexities achieved on the corpora by the LSTM are displayed in
 Table \ref{topk-table}. The smallest perplexity for non-English data sets 
 was measured for the Spring Framework, while the largest was for the JDK data. 
 The table also indicates that all four Java data sets showed a drastic 
@@ -481,7 +486,7 @@ perplexity achieved on the English dataset is similar to that reported by
 Zaremba et al. \cite{Zaremba}. These results indicate the superiority of LSTMs on both
 programming languages and a language as complex as the English language.
 
-Table \ref{topk-table} shows the top-$k$ accuracies for each copora.
+Table \ref{topk-table} shows the top-$k$ accuracies for each corpora.
 Clearly, results suggest that the proposed LSTM model is able to more
 accurately model pre-processed Java source code than it can English. The table
 also indicates that, for the English data set, the use of a large number of
@@ -508,6 +513,19 @@ could account for information such as variable types, variable names, etc.
 It would also be beneficial to compare the modeling of Java with other
 programming languages or to train the model across multiple repositories
 in one language.
+
+\vspace{5mm}
+
+\noindent
+\textbf{Source code repositories:}
+
+\vspace{2mm}
+
+\noindent
+LSTM model:
+\url{https://github.com/brendon-boldt/lstm-language-model} \\
+Java translator:
+\url{https://github.com/brendon-boldt/javalator}
 
 \begin{thebibliography}{1}
 
